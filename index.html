@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pong Game</title>
+  <style>
+    /* General Reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(to bottom, #1e3c72, #2a5298);
+      overflow: hidden;
+      color: white;
+    }
+
+    canvas {
+      background: #000;
+      border: 5px solid #2e8b57;
+      display: block;
+    }
+
+    /* Title */
+    h1 {
+      position: absolute;
+      top: 30px;
+      font-size: 24px;
+      text-shadow: 2px 2px 5px #000;
+    }
+  </style>
+</head>
+<body>
+  <h1>Pong Game</h1>
+  <canvas id="pong" width="800" height="400"></canvas>
+
+  <script>
+    const canvas = document.getElementById("pong");
+    const context = canvas.getContext("2d");
+
+    // Game Elements
+    const player1 = {
+      x: 10,
+      y: canvas.height / 2 - 50,
+      width: 10,
+      height: 100,
+      color: "white",
+      dy: 0,
+    };
+
+    const player2 = {
+      x: canvas.width - 20,
+      y: canvas.height / 2 - 50,
+      width: 10,
+      height: 100,
+      color: "white",
+      dy: 4, // Speed of computer paddle
+    };
+
+    const ball = {
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      radius: 8,
+      speed: 5,
+      dx: 4,
+      dy: 4,
+      color: "red",
+    };
+
+    // Draw Rectangular Paddle
+    function drawRect(x, y, w, h, color) {
+      context.fillStyle = color;
+      context.fillRect(x, y, w, h);
+    }
+
+    // Draw Ball
+    function drawBall(x, y, r, color) {
+      context.fillStyle = color;
+      context.beginPath();
+      context.arc(x, y, r, 0, Math.PI * 2, false);
+      context.closePath();
+      context.fill();
+    }
+
+    // Draw Net in the Middle
+    function drawNet() {
+      context.fillStyle = "white";
+      for (let i = 0; i < canvas.height; i += 15) {
+        context.fillRect(canvas.width / 2 - 1, i, 2, 10);
+      }
+    }
+
+    // Draw Everything
+    function render() {
+      // Clear Canvas
+      context.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw Elements
+      drawRect(0, 0, canvas.width, canvas.height, "black"); // Background
+      drawNet();
+      drawRect(player1.x, player1.y, player1.width, player1.height, player1.color);
+      drawRect(player2.x, player2.y, player2.width, player2.height, player2.color);
+      drawBall(ball.x, ball.y, ball.radius, ball.color);
+    }
+
+    // Update Positions and Check Collisions
+    function update() {
+      // Move Player 1 (Manual)
+      player1.y += player1.dy;
+
+      // Keep Player 1 within Canvas
+      if (player1.y < 0) player1.y = 0;
+      if (player1.y + player1.height > canvas.height)
+        player1.y = canvas.height - player1.height;
+
+      // Move Player 2 (AI)
+      if (player2.y + player2.height / 2 < ball.y) {
+        player2.y += player2.dy;
+      } else {
+        player2.y -= player2.dy;
+      }
+
+      // Ball Movement
+      ball.x += ball.dx;
+      ball.y += ball.dy;
+
+      // Ball Collision with Top/Bottom
+      if (ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) {
+        ball.dy *= -1;
+      }
+
+      // Ball Collision with Player 1
+      if (
+        ball.x - ball.radius < player1.x + player1.width &&
+        ball.y > player1.y &&
+        ball.y < player1.y + player1.height
+      ) {
+        ball.dx *= -1; // Reverse Ball Direction
+      }
+
+      // Ball Collision with Player 2
+      if (
+        ball.x + ball.radius > player2.x &&
+        ball.y > player2.y &&
+        ball.y < player2.y + player2.height
+      ) {
+        ball.dx *= -1; // Reverse Ball Direction
+      }
+
+      // Reset Ball if Out of Bounds
+      if (ball.x - ball.radius < 0 || ball.x + ball.radius > canvas.width) {
+        resetBall();
+      }
+    }
+
+    // Reset Ball
+    function resetBall() {
+      ball.x = canvas.width / 2;
+      ball.y = canvas.height / 2;
+      ball.dx *= -1; // Reverse Ball Direction
+    }
+
+    // Game Loop
+    function gameLoop() {
+      render();
+      update();
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Key Controls for Player 1
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowUp") player1.dy = -6;
+      if (e.key === "ArrowDown") player1.dy = 6;
+    });
+
+    window.addEventListener("keyup", () => {
+      player1.dy = 0;
+    });
+
+    // Start Game
+    gameLoop();
+  </script>
+</body>
+</html>
